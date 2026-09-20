@@ -1,39 +1,36 @@
-
 #include "main.h"
 
-#define MPU6050_ADDR       0xD0   // 0x68 << 1 (write address)
-#define MPU6050_ADDR_READ  0xD1   // 0x68 << 1 | 1 (read address)
-#define GYRO_XOUT_H  0x43
-#define PWR_MGMT_1      0x6B
-#define ACCEL_XOUT_H    0x3B
-#define WHO_AM_I        0x75
-
+/* MPU6050 I2C addresses */
 #define MPU6050_ADDR       0xD0   // 0x68 << 1 (write address)
 #define MPU6050_ADDR_READ  0xD1   // 0x68 << 1 | 1 (read address)
 
+/* MPU6050 registers */
+#define WHO_AM_I        0x75
 #define PWR_MGMT_1      0x6B
 #define ACCEL_XOUT_H    0x3B
-#define WHO_AM_I        0x75
+#define GYRO_XOUT_H     0x43
 
-
-
+/* I2C1 low-level primitives */
 void I2C1_Init(void);
 void I2C1_Start(void);
 void I2C1_Stop(void);
 void I2C1_WriteAddr(uint8_t addr);
+void I2C1_WriteData(uint8_t data);
 uint8_t I2C1_ReadDataAck(void);
+uint8_t I2C1_ReadDataNack(void);
 
+/* MPU6050 driver */
 void MPU6050_Init(void);
 void MPU6050_WriteReg(uint8_t reg, uint8_t value);
 uint8_t MPU6050_ReadReg(uint8_t reg);
-uint8_t I2C1_ReadDataNack(void);
 void MPU6050_ReadAccel(int16_t *ax, int16_t *ay, int16_t *az);
 void MPU6050_ReadGyro(int16_t *gx, int16_t *gy, int16_t *gz);
+
+/* UART2 output */
 void UART2_Init(void);
 void UART2_SendChar(char c);
 void UART2_SendString(char *str);
 void UART2_SendInt(int32_t num);
-
 
 int main(void)
 {
@@ -75,12 +72,9 @@ int main(void)
 
       for (volatile int d = 0; d < 800000; d++);
   }
-
-
 }
 
-
-
+/* ---------------- I2C1 low-level primitives ---------------- */
 
 void I2C1_Init(void)
 {
@@ -109,7 +103,6 @@ void I2C1_Init(void)
 
     I2C1->CR1 |= I2C_CR1_PE;            // enable I2C
 }
-
 
 void I2C1_Start(void)
 {
@@ -151,6 +144,14 @@ uint8_t I2C1_ReadDataNack(void)
     while (!(I2C1->SR1 & I2C_SR1_RXNE));
     return I2C1->DR;
 }
+
+/* ---------------- MPU6050 driver ---------------- */
+
+void MPU6050_Init(void)
+{
+    MPU6050_WriteReg(PWR_MGMT_1, 0x00);   // wake up (clears sleep bit)
+}
+
 void MPU6050_WriteReg(uint8_t reg, uint8_t value)
 {
     I2C1_Start();
@@ -175,11 +176,6 @@ uint8_t MPU6050_ReadReg(uint8_t reg)
     return value;
 }
 
-void MPU6050_Init(void)
-{
-    MPU6050_WriteReg(PWR_MGMT_1, 0x00);   // wake up (clears sleep bit)
-}
-
 void MPU6050_ReadAccel(int16_t *ax, int16_t *ay, int16_t *az)
 {
     uint8_t buf[6];
@@ -199,6 +195,7 @@ void MPU6050_ReadAccel(int16_t *ax, int16_t *ay, int16_t *az)
     *ay = (int16_t)(buf[2] << 8 | buf[3]);
     *az = (int16_t)(buf[4] << 8 | buf[5]);
 }
+
 void MPU6050_ReadGyro(int16_t *gx, int16_t *gy, int16_t *gz)
 {
     uint8_t buf[6];
@@ -218,6 +215,9 @@ void MPU6050_ReadGyro(int16_t *gx, int16_t *gy, int16_t *gz)
     *gy = (int16_t)(buf[2] << 8 | buf[3]);
     *gz = (int16_t)(buf[4] << 8 | buf[5]);
 }
+
+/* ---------------- UART2 output ---------------- */
+
 void UART2_Init(void)
 {
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
@@ -255,6 +255,7 @@ void UART2_SendString(char *str)
     while (*str)
         UART2_SendChar(*str++);
 }
+
 void UART2_SendInt(int32_t num)
 {
     char buf[12];
@@ -274,6 +275,3 @@ void UART2_SendInt(int32_t num)
     while (i > 0)
         UART2_SendChar(buf[--i]);
 }
-
-
-
