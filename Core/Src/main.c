@@ -1,7 +1,7 @@
 #include "main.h"
 
 /* MPU6050 I2C addresses */
-#define MPU6050_ADDR       0xD0   // 0x68 << 1 (write address)
+#define MPU6050_ADDR_WRITE       0xD0   // 0x68 << 1 (write address)
 #define MPU6050_ADDR_READ  0xD1   // 0x68 << 1 | 1 (read address)
 
 /* MPU6050 registers */
@@ -96,8 +96,8 @@ void I2C1_Init(void)
 
     I2C1->CR1 &= ~I2C_CR1_PE;          // disable I2C before config
 
-    // Assumes APB1 clock = 45MHz (adjust FREQ field if yours differs)
-    I2C1->CR2 = 16;                 // peripheral clock in MHz
+    // Assumes APB1 clock = 16MHz
+    I2C1->CR2 = 16;                    // peripheral clock in MHz
     I2C1->CCR = 80;                    // 100kHz standard mode: CCR = APB1freq/(2*100000)
     I2C1->TRISE = 17;                   // (APB1freq_MHz + 1)
 
@@ -155,7 +155,7 @@ void MPU6050_Init(void)
 void MPU6050_WriteReg(uint8_t reg, uint8_t value)
 {
     I2C1_Start();
-    I2C1_WriteAddr(MPU6050_ADDR);
+    I2C1_WriteAddr(MPU6050_ADDR_WRITE);
     I2C1_WriteData(reg);
     I2C1_WriteData(value);
     I2C1_Stop();
@@ -165,7 +165,7 @@ uint8_t MPU6050_ReadReg(uint8_t reg)
 {
     uint8_t value;
     I2C1_Start();
-    I2C1_WriteAddr(MPU6050_ADDR);
+    I2C1_WriteAddr(MPU6050_ADDR_WRITE);
     I2C1_WriteData(reg);
 
     I2C1_Start();               // repeated start
@@ -181,7 +181,7 @@ void MPU6050_ReadAccel(int16_t *ax, int16_t *ay, int16_t *az)
     uint8_t buf[6];
 
     I2C1_Start();
-    I2C1_WriteAddr(MPU6050_ADDR);
+    I2C1_WriteAddr(MPU6050_ADDR_WRITE);
     I2C1_WriteData(ACCEL_XOUT_H);
 
     I2C1_Start();               // repeated start
@@ -201,7 +201,7 @@ void MPU6050_ReadGyro(int16_t *gx, int16_t *gy, int16_t *gz)
     uint8_t buf[6];
 
     I2C1_Start();
-    I2C1_WriteAddr(MPU6050_ADDR);
+    I2C1_WriteAddr(MPU6050_ADDR_WRITE);
     I2C1_WriteData(GYRO_XOUT_H);
 
     I2C1_Start();
