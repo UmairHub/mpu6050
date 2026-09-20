@@ -1,6 +1,6 @@
 # MPU6050 IMU (Accelerometer + Gyroscope) - STM32 Nucleo-F446RE
 
-Bare-metal (register-level) driver for the MPU6050 IMU, reading raw accelerometer and gyroscope data over I2C and streaming it over UART. Part of the v1 autonomous robot build - orientation/heading stage.
+Bare-metal (register-level) driver for the MPU6050 IMU, reading raw accelerometer and gyroscope data over I2C and streaming it over UART. 
 
 ## How It Works
 
@@ -74,8 +74,4 @@ This project runs on the default reset clock - **HSI, 16MHz, no PLL** (no `Syste
 - Done: Accelerometer readings validated across multiple orientations.
 - Done: Gyroscope readings and heading integration validated (with decimal-precision print).
 - Not yet done: drift correction (would require combining with the accelerometer via a complementary/Kalman filter, or an absolute reference such as a magnetometer).
-- Not yet integrated into the main robot project - this is currently a standalone test project, to be merged with the motor (L298N) and distance sensor (HC-SR04) code for the full v1 reactive-avoidance build.
 
-## Related
-
-Part of the v1 build plan: motor (L298N) + IMU (MPU6050, this project) + distance sensor (HC-SR04), leading to reactive obstacle avoidance. Encoders deferred for now (motor on hand has no encoder).
