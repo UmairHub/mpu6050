@@ -1,27 +1,16 @@
-/* USER CODE BEGIN Header */
-/**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2026 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
-/* USER CODE END Header */
-/* Includes ------------------------------------------------------------------*/
+
 #include "main.h"
 
 #define MPU6050_ADDR       0xD0   // 0x68 << 1 (write address)
 #define MPU6050_ADDR_READ  0xD1   // 0x68 << 1 | 1 (read address)
 #define GYRO_XOUT_H  0x43
+#define PWR_MGMT_1      0x6B
+#define ACCEL_XOUT_H    0x3B
+#define WHO_AM_I        0x75
+
+#define MPU6050_ADDR       0xD0   // 0x68 << 1 (write address)
+#define MPU6050_ADDR_READ  0xD1   // 0x68 << 1 | 1 (read address)
+
 #define PWR_MGMT_1      0x6B
 #define ACCEL_XOUT_H    0x3B
 #define WHO_AM_I        0x75
@@ -39,21 +28,15 @@ void MPU6050_WriteReg(uint8_t reg, uint8_t value);
 uint8_t MPU6050_ReadReg(uint8_t reg);
 uint8_t I2C1_ReadDataNack(void);
 void MPU6050_ReadAccel(int16_t *ax, int16_t *ay, int16_t *az);
+void MPU6050_ReadGyro(int16_t *gx, int16_t *gy, int16_t *gz);
 void UART2_Init(void);
 void UART2_SendChar(char c);
 void UART2_SendString(char *str);
 void UART2_SendInt(int32_t num);
-void MPU6050_ReadGyro(int16_t *gx, int16_t *gy, int16_t *gz);
-/* USER CODE END 0 */
 
-/**
-  * @brief  The application entry point.
-  * @retval int
-  */
+
 int main(void)
 {
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
   I2C1_Init();
   MPU6050_Init();
   UART2_Init();
@@ -71,6 +54,10 @@ int main(void)
 
       float gyro_z_dps = gz / 131.0f;
       heading += gyro_z_dps * dt;
+      int32_t heading_whole = (int32_t)heading;
+      float heading_frac_f = heading - heading_whole;
+      if (heading_frac_f < 0) heading_frac_f = -heading_frac_f;
+      int32_t heading_frac = (int32_t)(heading_frac_f * 100);  // 2 decimal places
 
       UART2_SendString("ax: ");
       UART2_SendInt(ax);
@@ -80,26 +67,20 @@ int main(void)
       UART2_SendInt(az);
       UART2_SendString("  gz: ");
       UART2_SendInt(gz);
-      UART2_SendString("  heading: ");
-      UART2_SendInt((int32_t)heading);
+      UART2_SendString(" heading: ");
+      UART2_SendInt(heading_whole);
+      UART2_SendString(".");
+      UART2_SendInt(heading_frac);
       UART2_SendString(" deg\r\n");
 
       for (volatile int d = 0; d < 800000; d++);
   }
 
-  /* USER CODE END 3 */
+
 }
 
 
-/* USER CODE BEGIN 4 */
-#include "stm32f4xx.h"
 
-#define MPU6050_ADDR       0xD0   // 0x68 << 1 (write address)
-#define MPU6050_ADDR_READ  0xD1   // 0x68 << 1 | 1 (read address)
-
-#define PWR_MGMT_1      0x6B
-#define ACCEL_XOUT_H    0x3B
-#define WHO_AM_I        0x75
 
 void I2C1_Init(void)
 {
@@ -122,7 +103,7 @@ void I2C1_Init(void)
     I2C1->CR1 &= ~I2C_CR1_PE;          // disable I2C before config
 
     // Assumes APB1 clock = 45MHz (adjust FREQ field if yours differs)
-    I2C1->CR2 = 16;                     // peripheral clock in MHz
+    I2C1->CR2 = 16;                 // peripheral clock in MHz
     I2C1->CCR = 80;                    // 100kHz standard mode: CCR = APB1freq/(2*100000)
     I2C1->TRISE = 17;                   // (APB1freq_MHz + 1)
 
@@ -293,35 +274,6 @@ void UART2_SendInt(int32_t num)
     while (i > 0)
         UART2_SendChar(buf[--i]);
 }
-/* USER CODE END 4 */
 
-/**
-  * @brief  This function is executed in case of error occurrence.
-  * @retval None
-  */
-void Error_Handler(void)
-{
-  /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-  while (1)
-  {
-  }
-  /* USER CODE END Error_Handler_Debug */
-}
-#ifdef USE_FULL_ASSERT
-/**
-  * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
-  * @param  file: pointer to the source file name
-  * @param  line: assert_param error line source number
-  * @retval None
-  */
-void assert_failed(uint8_t *file, uint32_t line)
-{
-  /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-  /* USER CODE END 6 */
-}
-#endif /* USE_FULL_ASSERT */
+
+
