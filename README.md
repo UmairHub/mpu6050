@@ -13,6 +13,8 @@ Bare-metal (register-level) driver for the MPU6050 IMU, reading raw acceleromete
 
 ![MPU6050 wiring diagram](doc/mpu6050_wiring.svg)
 
+![MPU6050 Fritzing wiring diagram](doc/mpu6050_wiring_fritzing.png)
+
 | MPU6050 Pin | Nucleo Pin | Function |
 |-------------|------------|----------|
 | VCC         | 3.3V       | Power |
